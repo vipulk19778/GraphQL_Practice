@@ -42,7 +42,7 @@ const QUERY_ALL_USERS = gql`
             name
             age
           }
-          favoriteMovies {
+          favouriteMovies {
             id
             name
             yearOfPublication
@@ -62,7 +62,7 @@ const UsersList = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [dataToEdit, setDataToEdit] = useState({});
-  const [userId, setUserId] = useState("");
+  const [user, setUser] = useState({});
 
   const { loading, error, data, refetch } = useQuery(QUERY_ALL_USERS, {
     variables: {
@@ -79,12 +79,14 @@ const UsersList = () => {
     setCreateOpen(false);
     setDataToEdit({});
   };
-  const handleViewDialogOpen = (id) => {
+
+  const handleViewDialogOpen = (clickedUser) => {
+    setUser(clickedUser);
     setViewOpen(true);
-    setUserId(id);
   };
   const handleViewDialogClose = () => {
     setViewOpen(false);
+    setUser({});
   };
 
   const handleEdit = (user) => {
@@ -129,9 +131,9 @@ const UsersList = () => {
         <DialogContent>
           <UserCreate
             handleDialogClose={handleCreateDialogClose}
-            refetch={refetch}
             dataToEdit={dataToEdit}
             usersList={data?.users?.usersList}
+            refetch={refetch}
           />
         </DialogContent>
       </Dialog>
@@ -167,7 +169,7 @@ const UsersList = () => {
             ? data?.users?.usersList?.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell
-                    onClick={() => handleViewDialogOpen(user.id)}
+                    onClick={() => handleViewDialogOpen(user)}
                     sx={{ cursor: "pointer" }}
                   >
                     {user.id}
@@ -201,7 +203,7 @@ const UsersList = () => {
       </Table>
       <Dialog open={viewOpen} onClose={handleViewDialogClose}>
         <DialogContent>
-          <UserView handleDialogClose={handleViewDialogClose} userId={userId} />
+          <UserView handleDialogClose={handleViewDialogClose} user={user} />
         </DialogContent>
       </Dialog>
     </Box>

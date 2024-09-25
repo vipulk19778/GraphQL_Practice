@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
       enum: ["CANADA", "BRAZIL", "INDIA", "GERMANY", "CHILE"],
     },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    favoriteMovies: [
+    favouriteMovies: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Movie",

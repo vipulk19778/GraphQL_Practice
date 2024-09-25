@@ -25,7 +25,7 @@ const typeDefs = gql`
     age: Int!
     nationality: Nationality
     friends: [User]
-    favoriteMovies: [Movie]
+    favouriteMovies: [Movie]
   }
 
   type Movie {
@@ -48,6 +48,7 @@ const typeDefs = gql`
     age: Int!
     nationality: Nationality
     friends: [ID]
+    favouriteMovies: [ID]
   }
   input UpdateUserInput {
     id: ID!
@@ -56,6 +57,7 @@ const typeDefs = gql`
     age: Int
     nationality: Nationality
     friends: [ID]
+    favouriteMovies: [ID]
   }
 
   type Mutation {

@@ -56,9 +56,9 @@ const resolvers = {
           const searchName = args.name.toLowerCase();
           users = await User.find({
             name: { $regex: searchName, $options: "i" },
-          }).populate("friends");
+          }).populate("friends favouriteMovies");
         } else {
-          users = await User.find({}).populate("friends");
+          users = await User.find({}).populate("friends favouriteMovies");
         }
 
         if (users.length > 0) {
@@ -73,7 +73,9 @@ const resolvers = {
     },
     user: async (parent, args) => {
       try {
-        const user = await User.findById(args.id).populate("friends");
+        const user = await User.findById(args.id).populate(
+          "friends favouriteMovies"
+        );
         if (user) {
           return user;
         } else {
@@ -120,19 +122,11 @@ const resolvers = {
       }
     },
   },
-  User: {
-    favoriteMovies: () => {
-      return MovieList.filter(
-        (movie) =>
-          movie.yearOfPublication >= 2000 && movie.yearOfPublication <= 2010
-      );
-    },
-  },
-
   Mutation: {
     createUser: async (parent, args) => {
       try {
         const userInput = args.input;
+
         const user = new User(userInput);
         await user.save(); // Save the new user to the database
 

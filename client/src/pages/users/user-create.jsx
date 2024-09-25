@@ -1,4 +1,4 @@
-import { gql, useMutation } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import {
   Autocomplete,
   Box,
@@ -27,7 +27,28 @@ const UPDATE_USER_MUTATION = gql`
   }
 `;
 
-const UserCreate = ({ handleDialogClose, refetch, dataToEdit, usersList }) => {
+const QUERY_ALL_MOVIES = gql`
+  query GetAllMovies($searchByName: String) {
+    movies(name: $searchByName) {
+      ... on MoviesList {
+        moviesList {
+          id
+          name
+          yearOfPublication
+          isInTheaters
+        }
+      }
+      ... on ReturnMessage {
+        message
+      }
+    }
+  }
+`;
+
+const UserCreate = ({ handleDialogClose, dataToEdit, usersList, refetch }) => {
+  const { data } = useQuery(QUERY_ALL_MOVIES);
+  const moviesList = data?.movies?.moviesList;
+
   const [formData, setFormData] = useState(
     dataToEdit.id
       ? {
@@ -37,13 +58,15 @@ const UserCreate = ({ handleDialogClose, refetch, dataToEdit, usersList }) => {
           age: Number(dataToEdit.age),
           nationality: dataToEdit.nationality,
           friends: dataToEdit.friends,
+          favouriteMovies: dataToEdit.favouriteMovies,
         }
       : {
           name: "",
           username: "",
-          age: null,
+          age: 20,
           nationality: "",
           friends: [],
+          favouriteMovies: [],
         }
   );
 
@@ -60,8 +83,11 @@ const UserCreate = ({ handleDialogClose, refetch, dataToEdit, usersList }) => {
   };
 
   const handleFriends = (value) => {
-    console.log(value, "autocomplete value");
     setFormData((preValue) => ({ ...preValue, friends: value }));
+  };
+
+  const handleFavouriteMovies = (value) => {
+    setFormData((preValue) => ({ ...preValue, favouriteMovies: value }));
   };
 
   const handleCancel = () => {
@@ -76,6 +102,9 @@ const UserCreate = ({ handleDialogClose, refetch, dataToEdit, usersList }) => {
             ...formData,
             age: Number(formData?.age),
             friends: formData?.friends?.map((friend) => friend?.id),
+            favouriteMovies: formData?.favouriteMovies?.map(
+              (movie) => movie?.id
+            ),
           },
         },
       });
@@ -86,6 +115,9 @@ const UserCreate = ({ handleDialogClose, refetch, dataToEdit, usersList }) => {
             ...formData,
             age: Number(formData?.age),
             friends: formData?.friends?.map((friend) => friend?.id),
+            favouriteMovies: formData?.favouriteMovies?.map(
+              (movie) => movie?.id
+            ),
           },
         },
       });
@@ -151,14 +183,14 @@ const UserCreate = ({ handleDialogClose, refetch, dataToEdit, usersList }) => {
           size="small"
           multiple
           options={
-            dataToEdit?.id
+            (dataToEdit?.id
               ? usersList?.filter((user) => user.id !== dataToEdit.id)
-              : usersList
+              : usersList) || []
           }
-          getOptionLabel={(option) => option.name}
+          getOptionLabel={(option) => option?.name}
           value={formData?.friends || []}
           onChange={(e, newValue) => handleFriends(newValue)}
-          isOptionEqualToValue={(option, value) => option.id === value.id} // Prevent reselecting the same chip
+          isOptionEqualToValue={(option, value) => option?.id === value?.id} // Prevent reselecting the same chip
           renderInput={(params) => (
             <TextField
               {...params}
@@ -170,9 +202,35 @@ const UserCreate = ({ handleDialogClose, refetch, dataToEdit, usersList }) => {
           renderTags={(value, getTagProps) =>
             value.map((option, index) => (
               <Chip
-                label={option.name}
+                label={option?.name}
                 {...getTagProps({ index })}
-                key={option.id}
+                key={option?.id}
+              />
+            ))
+          }
+        />
+        <Autocomplete
+          size="small"
+          multiple
+          options={moviesList || []}
+          getOptionLabel={(option) => option?.name || ""}
+          value={formData?.favouriteMovies || []}
+          onChange={(e, newValue) => handleFavouriteMovies(newValue)}
+          isOptionEqualToValue={(option, value) => option?.id === value?.id} // Prevent reselecting the same chip
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant="outlined"
+              label="Favourite Movies"
+              placeholder="XYZ..."
+            />
+          )}
+          renderTags={(value, getTagProps) =>
+            value?.map((option, index) => (
+              <Chip
+                label={option?.name || "Unknown"}
+                {...getTagProps({ index })}
+                key={option?.id}
               />
             ))
           }
@@ -193,8 +251,8 @@ const UserCreate = ({ handleDialogClose, refetch, dataToEdit, usersList }) => {
 UserCreate.propTypes = {
   dataToEdit: PropTypes.object,
   handleDialogClose: PropTypes.func,
-  refetch: PropTypes.func,
   usersList: PropTypes.array,
+  refetch: PropTypes.func,
 };
 
 export default UserCreate;

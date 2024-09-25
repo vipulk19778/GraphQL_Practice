@@ -1,12 +1,22 @@
 import gql from "graphql-tag";
 
 const typeDefs = gql`
-  type UpdateSuccess {
+  type ReturnMessage {
     message: String!
   }
-  type UpdateError {
-    message: String!
+
+  type UsersList {
+    usersList: [User!]!
   }
+  type MoviesList {
+    moviesList: [Movie!]!
+  }
+
+  union UsersListResponse = UsersList | ReturnMessage
+  union UserResponse = User | ReturnMessage
+
+  union MoviesListResponse = MoviesList | ReturnMessage
+  union MovieResponse = Movie | ReturnMessage
 
   type User {
     id: ID!
@@ -26,10 +36,10 @@ const typeDefs = gql`
   }
 
   type Query {
-    users(name: String): [User!]!
+    users(name: String): UsersListResponse!
     user(id: ID!): UserResponse!
-    movies(name: String): [Movie!]!
-    movie(name: String!): Movie!
+    movies(name: String): MoviesListResponse!
+    movie(id: ID!): MovieResponse!
   }
 
   input CreateUserInput {
@@ -37,6 +47,7 @@ const typeDefs = gql`
     username: String!
     age: Int!
     nationality: Nationality
+    friends: [ID]
   }
   input UpdateUserInput {
     id: ID!
@@ -44,21 +55,16 @@ const typeDefs = gql`
     username: String
     age: Int
     nationality: Nationality
+    friends: [ID]
   }
 
   type Mutation {
-    createUser(input: CreateUserInput!): User
+    createUser(input: CreateUserInput!): ReturnMessage!
 
-    updateUser(input: UpdateUserInput!): UpdateUserResponse!
+    updateUser(input: UpdateUserInput!): ReturnMessage!
 
-    deleteUser(id: ID!): DeleteUserResponse!
+    deleteUser(id: ID!): ReturnMessage!
   }
-
-  union UserResponse = User | UpdateError
-
-  union UpdateUserResponse = User | UpdateError
-
-  union DeleteUserResponse = UpdateSuccess | UpdateError
 
   enum Nationality {
     CANADA

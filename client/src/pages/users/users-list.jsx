@@ -17,17 +17,12 @@ import {
 import Edit from "@mui/icons-material/Edit";
 import Delete from "@mui/icons-material/Delete";
 import UserCreate from "./user-create";
+import UserView from "./user-view";
 
 const DELETE_USER_MUTATION = gql`
   mutation DeleteUser($deleteUserId: ID!) {
     deleteUser(id: $deleteUserId) {
-      ... on UpdateSuccess {
-        message
-      }
-
-      ... on UpdateError {
-        message
-      }
+      message
     }
   }
 `;
@@ -35,20 +30,28 @@ const DELETE_USER_MUTATION = gql`
 const QUERY_ALL_USERS = gql`
   query GetAllUsers($searchByName: String) {
     users(name: $searchByName) {
-      id
-      name
-      username
-      age
-      nationality
-      friends {
-        name
-        age
+      ... on UsersList {
+        usersList {
+          id
+          name
+          username
+          age
+          nationality
+          friends {
+            id
+            name
+            age
+          }
+          favoriteMovies {
+            id
+            name
+            yearOfPublication
+            isInTheaters
+          }
+        }
       }
-      favoriteMovies {
-        id
-        name
-        yearOfPublication
-        isInTheaters
+      ... on ReturnMessage {
+        message
       }
     }
   }
@@ -56,8 +59,10 @@ const QUERY_ALL_USERS = gql`
 
 const UsersList = () => {
   const [searchByName, setSearchByName] = useState("");
-  const [open, setOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [dataToEdit, setDataToEdit] = useState({});
+  const [userId, setUserId] = useState("");
 
   const { loading, error, data, refetch } = useQuery(QUERY_ALL_USERS, {
     variables: {
@@ -67,15 +72,23 @@ const UsersList = () => {
 
   const [deleteUser] = useMutation(DELETE_USER_MUTATION);
 
-  const handleDialogOpen = () => {
-    setOpen(true);
+  const handleCreateDialogOpen = () => {
+    setCreateOpen(true);
   };
-  const handleDialogClose = () => {
-    setOpen(false);
+  const handleCreateDialogClose = () => {
+    setCreateOpen(false);
+    setDataToEdit({});
+  };
+  const handleViewDialogOpen = (id) => {
+    setViewOpen(true);
+    setUserId(id);
+  };
+  const handleViewDialogClose = () => {
+    setViewOpen(false);
   };
 
   const handleEdit = (user) => {
-    handleDialogOpen();
+    handleCreateDialogOpen();
     if (user) {
       setDataToEdit(user);
     }
@@ -105,15 +118,20 @@ const UsersList = () => {
     "Users Error"
   ) : (
     <Box>
-      <Button variant="contained" sx={{ mb: 2 }} onClick={handleDialogOpen}>
+      <Button
+        variant="contained"
+        sx={{ mb: 2 }}
+        onClick={handleCreateDialogOpen}
+      >
         Create User
       </Button>
-      <Dialog open={open} onClose={handleDialogClose}>
+      <Dialog open={createOpen} onClose={handleCreateDialogClose}>
         <DialogContent>
           <UserCreate
-            handleDialogClose={handleDialogClose}
+            handleDialogClose={handleCreateDialogClose}
             refetch={refetch}
             dataToEdit={dataToEdit}
+            usersList={data?.users?.usersList}
           />
         </DialogContent>
       </Dialog>
@@ -142,10 +160,18 @@ const UsersList = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {data && data?.users && data?.users?.length > 0
-            ? data?.users?.map((user) => (
+          {data &&
+          data?.users &&
+          data?.users &&
+          data?.users?.usersList?.length > 0
+            ? data?.users?.usersList?.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.id}</TableCell>
+                  <TableCell
+                    onClick={() => handleViewDialogOpen(user.id)}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    {user.id}
+                  </TableCell>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>{user.username}</TableCell>
                   <TableCell>{user.age}</TableCell>
@@ -173,6 +199,11 @@ const UsersList = () => {
             : searchByName && <p>No user found.</p>}
         </TableBody>
       </Table>
+      <Dialog open={viewOpen} onClose={handleViewDialogClose}>
+        <DialogContent>
+          <UserView handleDialogClose={handleViewDialogClose} userId={userId} />
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

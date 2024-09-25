@@ -3,34 +3,121 @@ import Movie from "../models/movie.js";
 import User from "../models/user.js";
 
 const resolvers = {
+  UsersListResponse: {
+    __resolveType(obj) {
+      if (obj.usersList) {
+        return "UsersList";
+      }
+      if (obj.message) {
+        return "ReturnMessage";
+      }
+      return null;
+    },
+  },
+  UserResponse: {
+    __resolveType(obj) {
+      if (obj.id) {
+        return "User";
+      }
+      if (obj.message) {
+        return "ReturnMessage";
+      }
+      return null;
+    },
+  },
+  MoviesListResponse: {
+    __resolveType(obj) {
+      if (obj.moviesList) {
+        return "MoviesList";
+      }
+      if (obj.message) {
+        return "ReturnMessage";
+      }
+      return null;
+    },
+  },
+  MovieResponse: {
+    __resolveType(obj) {
+      if (obj.id) {
+        return "Movie";
+      }
+      if (obj.message) {
+        return "ReturnMessage";
+      }
+      return null;
+    },
+  },
+
   Query: {
     users: async (parent, args) => {
-      if (args.name) {
-        const searchName = args.name.toLowerCase();
-        return UserList.filter((user) =>
-          user.name.toLowerCase().includes(searchName)
-        );
+      try {
+        let users;
+        if (args.name) {
+          const searchName = args.name.toLowerCase();
+          users = await User.find({
+            name: { $regex: searchName, $options: "i" },
+          }).populate("friends");
+        } else {
+          users = await User.find({}).populate("friends");
+        }
+
+        if (users.length > 0) {
+          return { usersList: users };
+        } else {
+          return { message: "No users found." };
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error.message);
+        return { message: "Failed to fetch users." };
       }
-      return await User.find();
     },
-    user: (parent, args) => {
-      const id = Number(args.id);
-      const user = UserList.find((user) => Number(user.id) === id);
-      if (user) return user;
-      return { message: "User not found." };
-    },
-    movies: (parent, args) => {
-      if (args.name) {
-        const searchName = args.name.toLowerCase();
-        return MovieList.filter((movie) =>
-          movie.name.toLowerCase().includes(searchName)
-        );
+    user: async (parent, args) => {
+      try {
+        const user = await User.findById(args.id).populate("friends");
+        if (user) {
+          return user;
+        } else {
+          return { message: "User not found." };
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error.message);
+        return { message: "Failed to fetch user." };
       }
-      return MovieList;
     },
-    movie: (parent, args) => {
-      const movieName = args.name;
-      return MovieList.find((movie) => movie.name === movieName);
+    movies: async (parent, args) => {
+      try {
+        let movies;
+        if (args.name) {
+          const searchName = args.name.toLowerCase();
+          movies = await Movie.find({
+            name: { $regex: searchName, $options: "i" },
+          });
+        } else {
+          movies = await Movie.find({});
+        }
+
+        if (movies.length > 0) {
+          return { moviesList: movies };
+        } else {
+          return { message: "No movies found." };
+        }
+      } catch (error) {
+        console.error("Error fetching movies:", error.message);
+        return { message: "Failed to fetch movies." };
+      }
+    },
+    movie: async (parent, args) => {
+      try {
+        const movie = await Movie.findById(args.id);
+        if (movie) {
+          return movie;
+        } else {
+          return { message: "Movie not found." };
+        }
+      } catch (error) {
+        console.error("Error fetching movie:", error.message);
+        return { message: "Failed to fetch movie." };
+      }
     },
   },
   User: {
@@ -42,83 +129,61 @@ const resolvers = {
     },
   },
 
-  UserResponse: {
-    __resolveType(obj) {
-      if (obj.id) {
-        return "User";
-      }
-      if (obj.message) {
-        return "UpdateError";
-      }
-      return null;
-    },
-  },
-
-  UpdateUserResponse: {
-    __resolveType(obj) {
-      if (obj.message) {
-        return "UpdateError";
-      }
-      return "User";
-    },
-  },
-
-  DeleteUserResponse: {
-    __resolveType(obj) {
-      if (obj.message === "User deleted successfully") {
-        return "UpdateSuccess";
-      }
-
-      if (obj.message === "User not found") {
-        return "UpdateError";
-      }
-
-      return null;
-    },
-  },
-
   Mutation: {
     createUser: async (parent, args) => {
-      const userInput = args.input;
-      console.log(userInput, "user successfully added");
+      try {
+        const userInput = args.input;
+        const user = new User(userInput);
+        await user.save(); // Save the new user to the database
 
-      // const lastId = UserList[UserList.length - 1].id;
-      // user.id = lastId + 1;
-      // UserList.push(user);
-      const user = new User(userInput);
-      return await user.save();
-    },
-    updateUser: (parent, args) => {
-      const inputUser = args.input;
+        // Return success message
+        return { message: "User created successfully" };
+      } catch (error) {
+        console.error("Error creating user:", error.message);
 
-      let updatedUser = null;
-      UserList.forEach((user, index) => {
-        if (Number(user.id) === Number(inputUser.id)) {
-          UserList[index] = { ...user, ...inputUser };
-          updatedUser = UserList[index];
-          console.log("user updated", UserList[index]);
-        }
-      });
-
-      if (!updatedUser) {
-        return { message: "Update Failed" };
+        // Return error message
+        return { message: "Failed to create user" };
       }
-      return updatedUser;
     },
-    deleteUser: (parent, args) => {
-      const id = Number(args.id);
-      const userIndex = UserList?.findIndex((user) => Number(user.id) === id);
 
-      if (userIndex > -1) {
-        UserList.splice(userIndex, 1);
-        UserList.forEach((user, index) => {
-          if (index >= userIndex) {
-            user.id--;
-          }
+    updateUser: async (parent, args) => {
+      try {
+        const userInput = args.input;
+        const user = await User.findByIdAndUpdate(userInput.id, userInput, {
+          new: true, // Return the updated document
         });
+
+        // If the user wasn't found, return failure message
+        if (!user) {
+          return { message: "User not found" };
+        }
+
+        // If the user was successfully updated, return success message
+        return { message: "User updated successfully" };
+      } catch (error) {
+        console.error("Error updating user:", error.message);
+
+        // Return error message
+        return { message: "Failed to update user" };
+      }
+    },
+    deleteUser: async (parent, args) => {
+      try {
+        const id = args.id;
+        const deletedUser = await User.findByIdAndDelete(id);
+
+        // If the user wasn't found, return failure message
+        if (!deletedUser) {
+          return { message: "User not found" };
+        }
+
+        // If the user was successfully deleted, return success message
         return { message: "User deleted successfully" };
-      } else {
-        return { message: "User not found" };
+      } catch (error) {
+        console.error("Error deleting user:", error.message);
+
+        // Return error message
+        return { message: "Failed to delete user" };
       }
     },
   },

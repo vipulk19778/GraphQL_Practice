@@ -15,10 +15,17 @@ import { useState } from "react";
 const QUERY_ALL_MOVIES = gql`
   query GetAllMovies($searchByName: String) {
     movies(name: $searchByName) {
-      id
-      name
-      yearOfPublication
-      isInTheaters
+      ... on MoviesList {
+        moviesList {
+          id
+          name
+          yearOfPublication
+          isInTheaters
+        }
+      }
+      ... on ReturnMessage {
+        message
+      }
     }
   }
 `;
@@ -70,8 +77,11 @@ const MoviesList = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {data && data?.movies && data?.movies?.length > 0
-            ? data?.movies?.map((movie) => (
+          {data &&
+          data?.movies &&
+          data?.movies?.moviesList &&
+          data?.movies?.moviesList?.length > 0
+            ? data?.movies?.moviesList?.map((movie) => (
                 <TableRow key={movie.id}>
                   <TableCell>{movie.id}</TableCell>
                   <TableCell>{movie.name}</TableCell>

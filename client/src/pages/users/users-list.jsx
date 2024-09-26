@@ -153,12 +153,12 @@ const UsersList = () => {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Id</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Username</TableCell>
-            <TableCell>Age</TableCell>
-            <TableCell>Nationality</TableCell>
-            <TableCell>Actions</TableCell>
+            <TableCell sx={{ fontSize: "18px" }}>Id</TableCell>
+            <TableCell sx={{ fontSize: "18px" }}>Name</TableCell>
+            <TableCell sx={{ fontSize: "18px" }}>Username</TableCell>
+            <TableCell sx={{ fontSize: "18px" }}>Age</TableCell>
+            <TableCell sx={{ fontSize: "18px" }}>Nationality</TableCell>
+            <TableCell sx={{ fontSize: "18px" }}>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>

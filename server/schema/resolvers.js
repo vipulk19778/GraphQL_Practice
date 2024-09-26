@@ -180,6 +180,63 @@ const resolvers = {
         return { message: "Failed to delete user" };
       }
     },
+    createMovie: async (parent, args) => {
+      try {
+        const movieInput = args.input;
+
+        const movie = new Movie(movieInput);
+        await movie.save(); // Save the new movie to the database
+
+        // Return success message
+        return { message: "Movie created successfully" };
+      } catch (error) {
+        console.error("Error creating movie:", error.message);
+
+        // Return error message
+        return { message: "Failed to create movie" };
+      }
+    },
+
+    updateMovie: async (parent, args) => {
+      try {
+        const movieInput = args.input;
+        const movie = await Movie.findByIdAndUpdate(movieInput.id, movieInput, {
+          new: true, // Return the updated document
+        });
+
+        // If the movie wasn't found, return failure message
+        if (!movie) {
+          return { message: "Movie not found" };
+        }
+
+        // If the movie was successfully updated, return success message
+        return { message: "Movie updated successfully" };
+      } catch (error) {
+        console.error("Error updating movie:", error.message);
+
+        // Return error message
+        return { message: "Failed to update movie" };
+      }
+    },
+    deleteMovie: async (parent, args) => {
+      try {
+        const id = args.id;
+        const deletedMovie = await Movie.findByIdAndDelete(id);
+
+        // If the movie wasn't found, return failure message
+        if (!deletedMovie) {
+          return { message: "Movie not found" };
+        }
+
+        // If the movie was successfully deleted, return success message
+        return { message: "Movie deleted successfully" };
+      } catch (error) {
+        console.error("Error deleting movie:", error.message);
+
+        // Return error message
+        return { message: "Failed to delete movie" };
+      }
+    },
   },
 };
 

@@ -60,12 +60,30 @@ const typeDefs = gql`
     favouriteMovies: [ID]
   }
 
+  input CreateMovieInput {
+    name: String!
+    yearOfPublication: Int!
+    isInTheaters: Boolean!
+  }
+  input UpdateMovieInput {
+    id: ID!
+    name: String
+    yearOfPublication: Int
+    isInTheaters: Boolean
+  }
+
   type Mutation {
     createUser(input: CreateUserInput!): ReturnMessage!
 
     updateUser(input: UpdateUserInput!): ReturnMessage!
 
     deleteUser(id: ID!): ReturnMessage!
+
+    createMovie(input: CreateMovieInput!): ReturnMessage!
+
+    updateMovie(input: UpdateMovieInput!): ReturnMessage!
+
+    deleteMovie(id: ID!): ReturnMessage!
   }
 
   enum Nationality {
